@@ -17,16 +17,7 @@ from io import StringIO
 import lxml.etree
 from selenium.webdriver.common.action_chains import ActionChains
 
-# from selenium.webdriver.firefox.webdriver import add_cookie,delete_cookie,refresh
-# opts = FirefoxOptions()
-# opts.add_argument("--headless")
-# install_dir = "/snap/firefox/current/usr/lib/firefox"
-# driver_loc = "/home/omniverse/Projects/fb-crawler/driver/geckodriver"
-# binary_loc = "/usr/bin/firefox"
-# service = FirefoxService(driver_loc)
-# opts = FirefoxOptions()
-# opts.binary_location = binary_loc
-# driver = webdriver.Firefox(service=service, options=opts)
+
 
 firefoxOptions = FirefoxOptions(); 
 firefoxOptions.set_preference("dom.webnotifications.enabled",False); 
@@ -42,7 +33,6 @@ sleep(4)
 
 print('Login successfully.')
 
-# saveCookies(driver)
 
 # sleep(
 loadCookies(driver)
