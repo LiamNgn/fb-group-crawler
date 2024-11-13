@@ -8,6 +8,14 @@ import pickle
 import os
 from dotenv import load_dotenv
 from selenium.webdriver.common.action_chains import ActionChains
+import pandas as pd
+from typing import Dict, List, Optional, Set
+from dataclasses import dataclass
+from selenium.webdriver.remote.webelement import WebElement
+import hashlib
+import uuid
+
+##Page manipulation function
 def scroll_until_end(driver,pause_time = 4):
     #This function scroll infinitely until the web is no longer scrollable
     SCROLL_PAUSE_TIME = pause_time
@@ -69,6 +77,7 @@ def facebook_login(driver):
     password_elem.send_keys(os.environ.get("PASSWORD"))
 
     password_elem.send_keys(Keys.RETURN)
+    sleep(5)
     saveCookies(driver)
 
 def saveCookies(driver):
@@ -92,7 +101,7 @@ def loadCookies(driver):
             driver.add_cookie(cookie)
     else:
         print('No cookies file found')
-    
+    sleep(5)
     driver.refresh() # Refresh Browser after login
 
 
@@ -128,44 +137,136 @@ def is_comment_single(comment):
 class CommentValueError(Exception):
     pass
 
+@dataclass
+class Comment:
+    ID: str
+    user_name: str
+    user_group_link: str
+    content: str
+    children: List['Comment'] = None
+    ParentID: Optional[str] = None
 
-def single_comment_extractor(comment):
-    comment_content = comment.find_elements(By.XPATH,"./div[./*]")
-    if len(comment_content) != 1:
-        raise CommentValueError("The comment must be single!")
-    comment_user = comment.find_element(By.XPATH,".//div[contains(@aria-label,'Comment by')]//span/a[./span]")
-    comment_user_link = "".join(["https://facebook.com",comment_user.get_attribute('href')])
-    comment_user_name = comment_user.find_element(By.XPATH,"./span/span").get_attribute('innerHTML')
-    comment_content = comment.find_element(By.XPATH,".//div[@style = 'text-align: start;']").get_attribute('innerHTML')
-    return {'Name':comment_user_name,'Group URL': comment_user_link,'Content':comment_content}
+    def __post_init__(self):
+        self.children = self.children or []
 
-def replied_comment_extractor(comment):
-    comment_list = comment.find_elements(By.XPATH,"./div[./*]")
-    if len(comment_list) == 1:
-        raise CommentValueError("The comment must not be single!")
-    for comment_section in comment_list:
-        if is_comment_single(comment_section):
-            return True
+class comment_tree:
+    def __init__(self):
+        self._comment_registry: Dict[str, Comment] = {}
+        self._used_ids: Set[str] = set()
 
-def comment_extractor(comment):
-    #Given any div comments extracted in a Facebook page, this function will return name of poster, link to poster account (in the group atm)
-    # but will be updated to profile later, and content of the poster.
-    list_comments = comment.find_elements(By.XPATH,"./div[./*]")
-    if len(list_comments) == 1:
-        print('This is a single comment.')
-        comment_user = comment.find_element(By.XPATH,".//div[contains(@aria-label,'Comment by')]//span/a[./span]")
+    def _comment_extraction_with_id_generator(self, comment: WebElement, parent_id: Optional[str] = None) -> str:
+        '''
+        Generate ID for a comment based on its properties including name, link, comment, content, parentID.
+        Args:
+            comment: a selenium WebElement, in our case it is a single comment section as specified above
+            parent_id: ID of the parent comment (if exists)
+        '''
+        if not is_comment_single(comment):
+            raise CommentValueError("The comment must be single!")
+        # comment_content = comment.find_elements(By.XPATH,"./div[./*]")
+        comment_user = comment.find_element(By.XPATH,".//div[contains(@aria-label,'by')]//span/a[./span]")
         comment_user_link = "".join(["https://facebook.com",comment_user.get_attribute('href')])
         comment_user_name = comment_user.find_element(By.XPATH,"./span/span").get_attribute('innerHTML')
-        print(comment_user_link)
-        print(comment_user_name)
         comment_content = comment.find_element(By.XPATH,".//div[@style = 'text-align: start;']").get_attribute('innerHTML')
-        print(comment_content)
-        # try:
-        #     top_contributor = comment_user.find_element(By.XPATH,'.//span[contains(text(),"Top contributor")]').get_attribute('innerHTML')
-        # except NoSuchElementException:
-        #     top_contributor = None
-        # print(top_contributor)
-        return {'Name':comment_user_name,'Group URL': comment_user_link,'Content':comment_content}
-    else:
-        print('This comment has replies.')
+
+        #Create the unique string combining properties of the comments
+        unique_string = f"{parent_id or ''}:{comment_user_name}:{comment_user_link}:{comment_content}:{uuid.uuid4()}"
+
+        # Generate hash
+        hash_object = hashlib.md5(unique_string.encode())
+        base_id = hash_object.hexdigest()[:8]
+
+        # Ensure ID is unique by adding suffix if necessary
+        node_id = base_id
+        counter = 1
+        while node_id in self._used_ids:
+            node_id = f"{base_id}_{counter}"
+            counter += 1
+
+        
+        self._used_ids.add(node_id)
+        return {'ID': node_id,'ParentID':parent_id,'Name':comment_user_name,'Group URL': comment_user_link,'Content':comment_content}
+    def build_comment_tree_section(self, comment_section: WebElement, parent_id: Optional[str] = None) -> Optional[Comment]:
+        '''
+        
+        '''
+        comment_list = comment_section.find_elements(By.XPATH,"./div[./*]")
+        parent_comment = comment_list[0]
+        parent_comment_info = self._comment_extraction_with_id_generator(parent_comment, parent_id)
+        
+        print(parent_comment_info)
+
+        #Process children comments
+        children = []
+
+        try:
+            children_list = comment_list[1].find_elements(By.XPATH,"./div[./*]//div[./div/div[contains(@aria-label,'Reply by')]]")
+            for child in children_list:
+                child_comment = self.build_comment_tree_section(child, parent_comment_info['ID'])
+                if child_comment:
+                    children.append(child_comment)
+        except IndexError:
+            pass
+        
+        parent_comment_node = Comment(
+            ID = parent_comment_info['ID'],
+            user_name = parent_comment_info['Name'],
+            user_group_link = parent_comment_info['Group URL'],
+            content = parent_comment_info['Content'],
+            ParentID = parent_comment_info['ParentID'],
+        )
+
+        #Add to registry
+        self._comment_registry[parent_comment_info['ID']] = parent_comment_node
+        return parent_comment_node
+
+                    
+
+
+
+
+# def single_comment_extractor(comment):
+    
+# def replied_comment_extractor(comment):
+    
+#     if len(comment_list) == 1:
+#         raise CommentValueError("The comment must not be single!")
+#     list_comment = []
+#     parent_content = single_comment_extractor(parent_comment)
+#     parent_content['ID'] = 1
+#     parent_content['ParentID']
+#     for comment_section in comment_list:
+#         if is_comment_single(comment_section):
+#             single_comment_extractor(comment)
+#         else:
+#             replied_comment_extractor(comment_section)
+            
+# def comment_extractor(comment):
+#     if is_comment_single(comment):
+#         single_comment_extractor(comment)
+#     else:
+        
+
+
+# def comment_extractor(comment):
+#     #Given any div comments extracted in a Facebook page, this function will return name of poster, link to poster account (in the group atm)
+#     # but will be updated to profile later, and content of the poster.
+#     list_comments = comment.find_elements(By.XPATH,"./div[./*]")
+#     if len(list_comments) == 1:
+#         print('This is a single comment.')
+#         comment_user = comment.find_element(By.XPATH,".//div[contains(@aria-label,'Comment by')]//span/a[./span]")
+#         comment_user_link = "".join(["https://facebook.com",comment_user.get_attribute('href')])
+#         comment_user_name = comment_user.find_element(By.XPATH,"./span/span").get_attribute('innerHTML')
+#         print(comment_user_link)
+#         print(comment_user_name)
+#         comment_content = comment.find_element(By.XPATH,".//div[@style = 'text-align: start;']").get_attribute('innerHTML')
+#         print(comment_content)
+#         # try:
+#         #     top_contributor = comment_user.find_element(By.XPATH,'.//span[contains(text(),"Top contributor")]').get_attribute('innerHTML')
+#         # except NoSuchElementException:
+#         #     top_contributor = None
+#         # print(top_contributor)
+#         return {'Name':comment_user_name,'Group URL': comment_user_link,'Content':comment_content}
+#     else:
+#         print('This comment has replies.')
         

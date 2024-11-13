@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
-from util import scroll_until_end, post_expand, saveCookies, loadCookies, comments_expand, comment_extractor
+from util import *  
 from selenium.webdriver.firefox.options import Options
 import pickle
 from io import StringIO
@@ -32,6 +32,8 @@ decline_cookie = driver.find_element(By.CSS_SELECTOR,'div.x1i10hfl:nth-child(2)'
 decline_cookie.click()
 
 sleep(4)
+# facebook_login(driver)
+# sleep(4)
 
 loadCookies(driver)
 
@@ -125,10 +127,12 @@ print('\n'.join(post_list))
 
 ##Find comments
 
+comment_builder = comment_tree()
+
 #Find all comment sections. A comment section is defined as a main comments and all of its children.
 comment_sections = driver.find_elements(By.XPATH,"//div[./div/div[contains(@aria-label,'Comment by')  and @role = 'article']]")
 for comment in comment_sections:
-    comment_extractor(comment)
+    comment_builder.build_comment_tree_section(comment)
 #Find number of separate reactions
 # react = driver.find_element(By.XPATH,"//div[./div[contains(text(),'All reactions')]]")
 sleep(5)
