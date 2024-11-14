@@ -133,6 +133,10 @@ comment_builder = comment_tree()
 comment_sections = driver.find_elements(By.XPATH,"//div[./div/div[contains(@aria-label,'Comment by')  and @role = 'article']]")
 for comment in comment_sections:
     comment_builder.build_comment_tree_section(comment)
+    df = pd.DataFrame.from_dict([i for i in comment_builder._comment_registry.values()])
+    print(df)
+
+pickle.dump(df, open("test_comment.pkl","wb"))
 #Find number of separate reactions
 # react = driver.find_element(By.XPATH,"//div[./div[contains(text(),'All reactions')]]")
 sleep(5)

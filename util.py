@@ -149,6 +149,15 @@ class Comment:
     def __post_init__(self):
         self.children = self.children or []
 
+    def to_dict(self) -> Dict:
+        return {
+            "ID": self.ID,
+            "Username": self.user_name,
+            "User_URL": self.user_group_link,
+            "Content": self.content,
+            "ParentID": self.ParentID,
+        }
+
 class comment_tree:
     def __init__(self):
         self._comment_registry: Dict[str, Comment] = {}
@@ -194,7 +203,7 @@ class comment_tree:
         parent_comment = comment_list[0]
         parent_comment_info = self._comment_extraction_with_id_generator(parent_comment, parent_id)
         
-        print(parent_comment_info)
+        # print(parent_comment_info)
 
         #Process children comments
         children = []
@@ -213,6 +222,7 @@ class comment_tree:
             user_name = parent_comment_info['Name'],
             user_group_link = parent_comment_info['Group URL'],
             content = parent_comment_info['Content'],
+            children = children,
             ParentID = parent_comment_info['ParentID'],
         )
 
@@ -220,7 +230,8 @@ class comment_tree:
         self._comment_registry[parent_comment_info['ID']] = parent_comment_node
         return parent_comment_node
 
-                    
+
+
 
 
 
