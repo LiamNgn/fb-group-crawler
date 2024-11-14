@@ -77,17 +77,17 @@ comments_expand(driver)
 sleep(5)
 post_expand(driver)
 
-page = driver.page_source.encode('utf-8') 
-# print(page) 
+# page = driver.page_source.encode('utf-8') 
+# # print(page) 
   
-# open result.html 
-file_ = open('result.html', 'wb') 
+# # open result.html 
+# file_ = open('result.html', 'wb') 
   
-# Write the entire page content in result.html 
-file_.write(page) 
+# # Write the entire page content in result.html 
+# file_.write(page) 
   
-# Closing the file 
-file_.close() 
+# # Closing the file 
+# file_.close() 
 
 
 # a = ActionChains(driver)
@@ -135,6 +135,8 @@ for comment in comment_sections:
     comment_builder.build_comment_tree_section(comment)
     df = pd.DataFrame.from_dict([i for i in comment_builder._comment_registry.values()])
     print(df)
+
+full_post = {"Post_user_name":profile_name,'creation_date':result,"All comments":df}
 
 pickle.dump(df, open("test_comment.pkl","wb"))
 #Find number of separate reactions

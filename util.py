@@ -129,6 +129,8 @@ def comments_expand(driver):
 
 def is_comment_single(comment):
     list_comments = comment.find_elements(By.XPATH,"./div[./*]")
+    # print([i.get_attribute('outerHTML') for i in list_comments])
+    # print(len(list_comments))
     if len(list_comments) == 1:
         return True
     else:
@@ -170,6 +172,9 @@ class comment_tree:
             comment: a selenium WebElement, in our case it is a single comment section as specified above
             parent_id: ID of the parent comment (if exists)
         '''
+        # print("Extracting comment.")
+        # print(comment.get_attribute('innerHTML'))
+        # print(parent_id)
         if not is_comment_single(comment):
             raise CommentValueError("The comment must be single!")
         # comment_content = comment.find_elements(By.XPATH,"./div[./*]")
@@ -209,7 +214,13 @@ class comment_tree:
         children = []
 
         try:
-            children_list = comment_list[1].find_elements(By.XPATH,"./div[./*]//div[./div/div[contains(@aria-label,'Reply by')]]")
+            children_list = comment_list[1].find_elements(By.XPATH,"./div[./*]/div[./div/div[contains(@aria-label,' by ') and @role = 'article']]")
+            if len(children_list) == 0:
+                children_list = comment_list[1].find_elements(By.XPATH,"./div[./div/div[contains(@aria-label,' by ') and @role = 'article']]")
+
+            # print(parent_comment_info['Name'])
+            # print(parent_comment_info['ID'])
+            # print(children_list)
             for child in children_list:
                 child_comment = self.build_comment_tree_section(child, parent_comment_info['ID'])
                 if child_comment:
