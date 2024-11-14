@@ -59,10 +59,18 @@ link = link_lst[1]
 driver.get(link)
 
 sleep(5)
-
+print(link)
 #Get profile name
-profile_name_div = driver.find_element(By.XPATH,'//div[@data-ad-rendering-role="profile_name"]//object/div')
-profile_name = profile_name_div.get_attribute('innerHTML')
+profile_div = driver.find_element(By.XPATH,'//div[@data-ad-rendering-role="profile_name"]')
+try:
+    profile_link = profile_div.find_element(By.XPATH,'.//a').get_attribute('href')
+    profile_info = profile_div.find_element(By.XPATH,'.//strong/span')
+    profile_name = profile_info.get_attribute('innerHTML')
+except NoSuchElementException:
+    profile_link = None
+    profile_info = profile_div.find_element(By.XPATH,".//object/div")
+    profile_name = profile_info.get_attribute('innerHTML')
+
 
 
 #Get creation date
@@ -76,23 +84,6 @@ sleep(5)
 comments_expand(driver)
 sleep(5)
 post_expand(driver)
-
-# page = driver.page_source.encode('utf-8') 
-# # print(page) 
-  
-# # open result.html 
-# file_ = open('result.html', 'wb') 
-  
-# # Write the entire page content in result.html 
-# file_.write(page) 
-  
-# # Closing the file 
-# file_.close() 
-
-
-# a = ActionChains(driver)
-# print('Actions initiated.')
-
 
 def find_key(data, target_key):
     if isinstance(data, dict):
@@ -123,7 +114,6 @@ post_list = []
 for post in post_data:
     post_list.append(post.get_attribute('innerHTML'))
 
-print('\n'.join(post_list))
 
 ##Find comments
 
@@ -134,33 +124,11 @@ comment_sections = driver.find_elements(By.XPATH,"//div[./div/div[contains(@aria
 for comment in comment_sections:
     comment_builder.build_comment_tree_section(comment)
     df = pd.DataFrame.from_dict([i for i in comment_builder._comment_registry.values()])
-    print(df)
 
-full_post = {"Post_user_name":profile_name,'creation_date':result,"All comments":df}
 
-pickle.dump(df, open("test_comment.pkl","wb"))
+full_post = {'Post_url':link,"Post_username":profile_name,'Post_user_url':profile_link,'creation_date':result,'Post_content':post_list,"All comments":df}
+
+pickle.dump(full_post, open("test_comment.pkl","wb"))
+
 #Find number of separate reactions
-# react = driver.find_element(By.XPATH,"//div[./div[contains(text(),'All reactions')]]")
-sleep(5)
-# react.click()
-sleep(5)
-# dialog = driver.find_element(By.XPATH,"//div[@role = 'dialog']")
-sleep(5)
-# driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", dialog)
 
-
-#Scroll reaction section
-
-# element_list = driver.find_elements(By.XPATH,"//div[@role = 'dialog']//div[contains(@style,'padding-left')]")
-# element = element_list[-1]
-
-# while True:
-#     sleep(5)
-#     driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", element)
-#     sleep(10)
-#     new_element_list = driver.find_elements(By.XPATH,"//div[@role = 'dialog']//div[contains(@style,'padding-left')]")
-#     sleep(10)
-#     if element == new_element_list[-1]:
-#         break
-#     else:
-#         element = new_element_list[-1]
