@@ -181,7 +181,11 @@ class comment_tree:
         comment_user = comment.find_element(By.XPATH,".//div[contains(@aria-label,'by')]//span/a[./span]")
         comment_user_link = "".join(["https://facebook.com",comment_user.get_attribute('href')])
         comment_user_name = comment_user.find_element(By.XPATH,"./span/span").get_attribute('innerHTML')
-        comment_content = comment.find_element(By.XPATH,".//div[@style = 'text-align: start;']").get_attribute('innerHTML')
+        # print(comment.get_attribute('innerHTML'))
+        try:
+            comment_content = comment.find_element(By.XPATH,".//div[@style = 'text-align: start;']").get_attribute('innerHTML')
+        except NoSuchElementException:
+            comment_content = comment.find_element(By.XPATH,".//img[contains(@alt,'GIF')]").get_attribute('src')
 
         #Create the unique string combining properties of the comments
         unique_string = f"{parent_id or ''}:{comment_user_name}:{comment_user_link}:{comment_content}:{uuid.uuid4()}"
