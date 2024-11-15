@@ -1,5 +1,5 @@
 from time import sleep
-from selenium.common.exceptions import NoSuchElementException,ElementClickInterceptedException
+from selenium.common.exceptions import NoSuchElementException,ElementClickInterceptedException, MoveTargetOutOfBoundsException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -145,8 +145,10 @@ class Comment:
     user_name: str
     user_group_link: str
     content: str
+    image: str
     children: List['Comment'] = None
     ParentID: Optional[str] = None
+
 
     def __post_init__(self):
         self.children = self.children or []
@@ -165,7 +167,7 @@ class comment_tree:
         self._comment_registry: Dict[str, Comment] = {}
         self._used_ids: Set[str] = set()
 
-    def _comment_extraction_with_id_generator(self, comment: WebElement, parent_id: Optional[str] = None) -> str:
+    def _comment_extraction_with_id_generator(self,driver, comment: WebElement, parent_id: Optional[str] = None) -> str:
         '''
         Generate ID for a comment based on its properties including name, link, comment, content, parentID.
         Args:
@@ -187,6 +189,21 @@ class comment_tree:
         except NoSuchElementException:
             comment_content = comment.find_element(By.XPATH,".//img[contains(@alt,'GIF')]").get_attribute('src')
 
+        # a = ActionChains(driver)
+
+        try:
+            # comment_image_element = comment.find_element(By.XPATH,".//a[./img]")
+            # try:
+            #     a.move_to_element(comment_image_element).perform()
+            #     sleep(5)
+            # except MoveTargetOutOfBoundsException:
+            #     driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", comment_image_element)
+            #     sleep(5)
+            #     a.move_to_element(comment_image_element).perform()
+            comment_image = comment.find_element(By.XPATH,".//a[./img]/img").get_attribute('src')
+        except NoSuchElementException:
+            comment_image = None
+
         #Create the unique string combining properties of the comments
         unique_string = f"{parent_id or ''}:{comment_user_name}:{comment_user_link}:{comment_content}:{uuid.uuid4()}"
 
@@ -203,14 +220,15 @@ class comment_tree:
 
         
         self._used_ids.add(node_id)
-        return {'ID': node_id,'ParentID':parent_id,'Name':comment_user_name,'Group URL': comment_user_link,'Content':comment_content}
-    def build_comment_tree_section(self, comment_section: WebElement, parent_id: Optional[str] = None) -> Optional[Comment]:
+        return {'ID': node_id,'ParentID':parent_id,'Name':comment_user_name,'Group URL': comment_user_link,
+                'Content':comment_content,'Image': comment_image}
+    def build_comment_tree_section(self, driver, comment_section: WebElement, parent_id: Optional[str] = None) -> Optional[Comment]:
         '''
         
         '''
         comment_list = comment_section.find_elements(By.XPATH,"./div[./*]")
         parent_comment = comment_list[0]
-        parent_comment_info = self._comment_extraction_with_id_generator(parent_comment, parent_id)
+        parent_comment_info = self._comment_extraction_with_id_generator(driver,parent_comment, parent_id)
         
         # print(parent_comment_info)
 
@@ -221,12 +239,11 @@ class comment_tree:
             children_list = comment_list[1].find_elements(By.XPATH,"./div[./*]/div[./div/div[contains(@aria-label,' by ') and @role = 'article']]")
             if len(children_list) == 0:
                 children_list = comment_list[1].find_elements(By.XPATH,"./div[./div/div[contains(@aria-label,' by ') and @role = 'article']]")
-
             # print(parent_comment_info['Name'])
             # print(parent_comment_info['ID'])
             # print(children_list)
             for child in children_list:
-                child_comment = self.build_comment_tree_section(child, parent_comment_info['ID'])
+                child_comment = self.build_comment_tree_section(driver, child, parent_comment_info['ID'])
                 if child_comment:
                     children.append(child_comment)
         except IndexError:
@@ -237,6 +254,7 @@ class comment_tree:
             user_name = parent_comment_info['Name'],
             user_group_link = parent_comment_info['Group URL'],
             content = parent_comment_info['Content'],
+            image = parent_comment_info['Image'],
             children = children,
             ParentID = parent_comment_info['ParentID'],
         )

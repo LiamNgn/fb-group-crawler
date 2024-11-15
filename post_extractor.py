@@ -168,7 +168,7 @@ comment_builder = comment_tree()
 #Find all comment sections. A comment section is defined as a main comments and all of its children.
 comment_sections = driver.find_elements(By.XPATH,"//div[./div/div[contains(@aria-label,'Comment by')  and @role = 'article']]")
 for comment in comment_sections:
-    comment_builder.build_comment_tree_section(comment)
+    comment_builder.build_comment_tree_section(driver,comment)
     df = pd.DataFrame.from_dict([i for i in comment_builder._comment_registry.values()])
 
 
