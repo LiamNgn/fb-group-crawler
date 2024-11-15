@@ -52,11 +52,28 @@ def find_all_key_paths(data, target_key, path=None, paths=None):
             find_all_key_paths(item, target_key, new_path, paths)
     return paths
 
+
+
 def post_extrator(driver,link):
+        '''
+        Given any link and a Selenium driver, this function will export post_url, post_username, post_user_url, image of the post(if available), creation_date, post_content, reactions_count (up to the level of each individual), and all comments
+        '''
         driver.get(link)
 
         sleep(5)
         print(link)
+
+        #Print all comments
+        most_relevant = driver.find_element(By.XPATH,"//div[./span[contains(text(),'Most relevant')]]")
+        sleep(2)
+        most_relevant.click()
+
+        sleep(2)
+
+        view_all_comments = WebDriverWait(driver, 40).until(EC.element_to_be_clickable((By.XPATH, ".//div[./div/div/div/span[contains(text(),'All comments')]]")))
+        view_all_comments.click()
+
+
         #Get profile name
         profile_div = driver.find_element(By.XPATH,'//div[@data-ad-rendering-role="profile_name"]')
         try:
@@ -134,11 +151,13 @@ def post_extrator(driver,link):
 
         #Find all comment sections. A comment section is defined as a main comments and all of its children.
         comment_sections = driver.find_elements(By.XPATH,"//div[./div/div[contains(@aria-label,'Comment by')  and @role = 'article']]")
+        i = 0
         for comment in comment_sections:
             comment_builder.build_comment_tree_section(driver,comment)
+            # sleep(3)
             df = pd.DataFrame.from_dict([i for i in comment_builder._comment_registry.values()])
-
-
+            print(f'The {i}-th comment section will have cumulative {len(df)} comments')
+            i += 1
         full_post = {'Post_url':link,"Post_username":profile_name,'Post_user_url':profile_link,
                     'creation_date':result,'Post_content':post_list,'Image_in_post':image_in_post,'reaction_count': reaction_result,"All comments":df}
 

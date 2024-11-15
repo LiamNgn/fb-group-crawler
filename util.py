@@ -51,7 +51,7 @@ def post_expand(driver):
             driver.find_element(By.XPATH,"//div[./div/div/span/div/div/div[text() = 'See more']]")
         except NoSuchElementException:
             break
-        sleep(10)
+        sleep(3)
         parent_element = driver.find_element(By.XPATH,"//div[./div/div/span/div/div/div[text() = 'See more']]")
         sleep(3)
         element = WebDriverWait(parent_element, 40).until(EC.element_to_be_clickable((By.XPATH, ".//div[text()='See more']")))
@@ -59,7 +59,7 @@ def post_expand(driver):
             element.click()
         except ElementClickInterceptedException:
             driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", parent_element)
-            sleep(5)
+            sleep(3)
             ActionChains(driver).move_to_element(element).click().perform() 
         print(f"Click see more {i}th time.")
         i += 1 
@@ -113,14 +113,37 @@ def comments_expand(driver):
     #This function expand all comments visible on a Facebook webpage 
     i = 1
     while True:
-        sleep(4)
+        sleep(3)
+        try: 
+            driver.find_element(By.XPATH,"//div[./span/span[contains(text(),'View more')]]")
+        except NoSuchElementException:
+            break
+        sleep(3)
+        element = WebDriverWait(driver, 40).until(EC.element_to_be_clickable((By.XPATH, "//div[./span/span[contains(text(),'View more')]]")))
+        try:
+            element.click()
+        except ElementClickInterceptedException:
+            driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", element)
+            sleep(3)
+            ActionChains(driver).move_to_element(element).click().perform() 
+        print(f"Click view more comments {i}th time.")
+        i += 1
+    i = 1
+    while True:
+        sleep(3)
 
         try: 
             driver.find_element(By.XPATH,"//div[./span/span[contains(text(),'repl')]]")
         except NoSuchElementException:
             break
-        sleep(10)
-        WebDriverWait(driver, 40).until(EC.element_to_be_clickable((By.XPATH, "//div[./span/span[contains(text(),'repl')]]"))).click()
+        sleep(3)
+        element = WebDriverWait(driver, 40).until(EC.element_to_be_clickable((By.XPATH, "//div[./span/span[contains(text(),'repl')]]")))
+        try:
+            element.click()
+        except ElementClickInterceptedException:
+            driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", element)
+            sleep(3)
+            ActionChains(driver).move_to_element(element).click().perform() 
         print(f"Click view more replies {i}th time.")
         i += 1 
     print('Out of view more replies button.')
@@ -145,7 +168,7 @@ class Comment:
     user_name: str
     user_group_link: str
     content: str
-    image: str
+    media: str
     children: List['Comment'] = None
     ParentID: Optional[str] = None
 
@@ -187,7 +210,14 @@ class comment_tree:
         try:
             comment_content = comment.find_element(By.XPATH,".//div[@style = 'text-align: start;']").get_attribute('innerHTML')
         except NoSuchElementException:
-            comment_content = comment.find_element(By.XPATH,".//img[contains(@alt,'GIF')]").get_attribute('src')
+            try:
+                comment_content = comment.find_element(By.XPATH,".//a/img").get_attribute('src')
+            except NoSuchElementException:
+                try:
+                    comment_content = comment.find_element(By.XPATH,".//video").get_attribute('src')
+                except NoSuchElementException:
+                    comment_content = comment.find_element(By.XPATH,".//div[@role = 'button' and ./img]/img").get_attribute('src')
+            
 
         # a = ActionChains(driver)
 
@@ -200,10 +230,18 @@ class comment_tree:
             #     driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", comment_image_element)
             #     sleep(5)
             #     a.move_to_element(comment_image_element).perform()
-            comment_image = comment.find_element(By.XPATH,".//a[./img]/img").get_attribute('src')
+            comment_media = comment.find_element(By.XPATH,".//a[./img]/img").get_attribute('src')
         except NoSuchElementException:
-            comment_image = None
-
+            try:
+                comment_media = comment.find_element(By.XPATH,".//video").get_attribute('src')
+            except NoSuchElementException:
+                try:
+                    comment_media = comment.find_element(By.XPATH,".//div[@role = 'button' and ./img]/img").get_attribute('src')           
+                except NoSuchElementException:
+                    try:
+                        comment_media = comment.find_element(By.XPATH,".//div/img").get_attribute('src')
+                    except NoSuchElementException:
+                        comment_media = None
         #Create the unique string combining properties of the comments
         unique_string = f"{parent_id or ''}:{comment_user_name}:{comment_user_link}:{comment_content}:{uuid.uuid4()}"
 
@@ -221,7 +259,7 @@ class comment_tree:
         
         self._used_ids.add(node_id)
         return {'ID': node_id,'ParentID':parent_id,'Name':comment_user_name,'Group URL': comment_user_link,
-                'Content':comment_content,'Image': comment_image}
+                'Content':comment_content,'Media': comment_media}
     def build_comment_tree_section(self, driver, comment_section: WebElement, parent_id: Optional[str] = None) -> Optional[Comment]:
         '''
         
@@ -254,7 +292,7 @@ class comment_tree:
             user_name = parent_comment_info['Name'],
             user_group_link = parent_comment_info['Group URL'],
             content = parent_comment_info['Content'],
-            image = parent_comment_info['Image'],
+            media = parent_comment_info['Media'],
             children = children,
             ParentID = parent_comment_info['ParentID'],
         )

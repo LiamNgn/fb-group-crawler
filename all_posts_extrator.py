@@ -18,6 +18,7 @@ import lxml.etree
 from selenium.webdriver.common.action_chains import ActionChains
 import json
 from post_extractor import post_extrator
+import logging
 
 with open('link_list.pkl', 'rb') as f:
     link_lst = pickle.load(f)
@@ -33,8 +34,8 @@ decline_cookie = driver.find_element(By.CSS_SELECTOR,'div.x1i10hfl:nth-child(2)'
 decline_cookie.click()
 
 sleep(4)
-# facebook_login(driver)
-# sleep(4)
+facebook_login(driver)
+sleep(4)
 
 loadCookies(driver)
 
@@ -42,12 +43,17 @@ print('Cookies loaded. Login successfully.')
 
 sleep(3)
 
-
+logging.basicConfig(filename = 'crawl_log.log',filemode = 'w',level = logging.INFO)
 
 # link = link_lst[4]
 
-link = 'https://www.facebook.com/groups/bumblevietnam/posts/2381987825327016/'
-full_post = post_extrator(link,driver)
+# link = 'https://www.facebook.com/groups/bumblevietnam/posts/2381987825327016/' // This link is obscured by a link to facebook homepage, which is weird -> TODO
+link = "https://www.facebook.com/groups/bumblevietnam/posts/2381571642035301/"
+
+
+
+sleep(5)
+full_post = post_extrator(driver,link)
 
 
 # post_2023 = []
@@ -55,8 +61,8 @@ full_post = post_extrator(link,driver)
 #     post = post_extrator(driver, link)
 #     post_2023.append(link)
 
-
-pickle.dump(full_post, open("test_comment.pkl","wb"))
+with open("test_comment.pkl","wb") as f:
+    pickle.dump(full_post, f)
 
 #Find number of separate reactions
 
