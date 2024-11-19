@@ -17,6 +17,16 @@ from io import StringIO
 import lxml.etree
 from selenium.webdriver.common.action_chains import ActionChains
 import json
+import logging
+import my_logger
+
+root_logger = logging.getLogger()
+file_handler = logging.FileHandler('post_extractor.log')
+root_logger.setLevel(logging.INFO)
+root_logger.addHandler(file_handler)
+
+my_logger.my_function()
+
 
 
 def find_key(data, target_key):
@@ -156,7 +166,7 @@ def post_extrator(driver,link):
             comment_builder.build_comment_tree_section(driver,comment)
             # sleep(3)
             df = pd.DataFrame.from_dict([i for i in comment_builder._comment_registry.values()])
-            print(f'The {i}-th comment section will have cumulative {len(df)} comments')
+            print(f'The {make_ordinal(i)} comment section will have cumulative {len(df)} comments')
             i += 1
         full_post = {'Post_url':link,"Post_username":profile_name,'Post_user_url':profile_link,
                     'creation_date':result,'Post_content':post_list,'Image_in_post':image_in_post,'reaction_count': reaction_result,"All comments":df}

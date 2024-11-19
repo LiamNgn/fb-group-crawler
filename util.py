@@ -14,6 +14,34 @@ from dataclasses import dataclass
 from selenium.webdriver.remote.webelement import WebElement
 import hashlib
 import uuid
+import logging
+import my_logger
+
+root_logger = logging.getLogger()
+file_handler = logging.FileHandler('util_log.log',mode = 'w')
+root_logger.setLevel(logging.INFO)
+root_logger.addHandler(file_handler)
+
+my_logger.my_function()
+
+
+
+#Util function
+def make_ordinal(n):
+    '''
+    Convert an integer into its ordinal representation::
+
+        make_ordinal(0)   => '0th'
+        make_ordinal(3)   => '3rd'
+        make_ordinal(122) => '122nd'
+        make_ordinal(213) => '213th'
+    '''
+    n = int(n)
+    if 11 <= (n % 100) <= 13:
+        suffix = 'th'
+    else:
+        suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
+    return str(n) + suffix
 
 ##Page manipulation function
 def scroll_until_end(driver,pause_time = 4):
@@ -61,7 +89,7 @@ def post_expand(driver):
             driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", parent_element)
             sleep(3)
             ActionChains(driver).move_to_element(element).click().perform() 
-        print(f"Click see more {i}th time.")
+        print(f"Click see more {make_ordinal(i)} time.")
         i += 1 
     print('Out of see more button.')
 
@@ -126,7 +154,7 @@ def comments_expand(driver):
             driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", element)
             sleep(3)
             ActionChains(driver).move_to_element(element).click().perform() 
-        print(f"Click view more comments {i}th time.")
+        print(f"Click view more comments {make_ordinal(i)} time.")
         i += 1
     i = 1
     while True:
@@ -144,7 +172,7 @@ def comments_expand(driver):
             driver.execute_script("arguments[0].scrollIntoView(true);window.scrollBy(0,-100);", element)
             sleep(3)
             ActionChains(driver).move_to_element(element).click().perform() 
-        print(f"Click view more replies {i}th time.")
+        print(f"Click view more replies {make_ordinal(i)} time.")
         i += 1 
     print('Out of view more replies button.')
 
@@ -200,6 +228,10 @@ class comment_tree:
         # print("Extracting comment.")
         # print(comment.get_attribute('innerHTML'))
         # print(parent_id)
+        logging.info(f'Extracting comment with parent_id {parent_id} and innerHTML')
+        logging.info('+++++++')
+        logging.info(comment.get_attribute('innerHTML'))
+        logging.info('=======')
         if not is_comment_single(comment):
             raise CommentValueError("The comment must be single!")
         # comment_content = comment.find_elements(By.XPATH,"./div[./*]")
@@ -216,7 +248,13 @@ class comment_tree:
                 try:
                     comment_content = comment.find_element(By.XPATH,".//video").get_attribute('src')
                 except NoSuchElementException:
-                    comment_content = comment.find_element(By.XPATH,".//div[@role = 'button' and ./img]/img").get_attribute('src')
+                    try:
+                        comment_content = comment.find_element(By.XPATH,".//div[@role = 'button' and ./img]/img").get_attribute('src')
+                    except NoSuchElementException:
+                        try:
+                            comment_content = comment.find_element(By.XPATH,".//div/img").get_attribute('src')
+                        except Exception as e:
+                            logging(e)
             
 
         # a = ActionChains(driver)
@@ -264,28 +302,77 @@ class comment_tree:
         '''
         
         '''
-        comment_list = comment_section.find_elements(By.XPATH,"./div[./*]")
-        parent_comment = comment_list[0]
-        parent_comment_info = self._comment_extraction_with_id_generator(driver,parent_comment, parent_id)
-        
+        try:
+            comment_list = comment_section.find_elements(By.XPATH,"./div[./*]")
+            parent_comment = comment_list[0]
+            parent_comment_info = self._comment_extraction_with_id_generator(driver,parent_comment, parent_id)
+        except CommentValueError:
+            parent_comment = comment_section
+            comment_list = [comment_section]
+            # print('Checking removed comments')
+            # print(parent_comment.get_attribute('innerHTML'))
+            parent_comment_info = self._comment_extraction_with_id_generator(driver,parent_comment, parent_id)   
         # print(parent_comment_info)
 
         #Process children comments
         children = []
-
+        removed_comment = []
         try:
-            children_list = comment_list[1].find_elements(By.XPATH,"./div[./*]/div[./div/div[contains(@aria-label,' by ') and @role = 'article']]")
+            children_list = comment_list[1].find_elements(By.XPATH,"./div[./*]/div[./div/div[contains(@aria-label,' by ') and @role = 'article' and not(contains(text(),'has been deleted'))]]")
             if len(children_list) == 0:
-                children_list = comment_list[1].find_elements(By.XPATH,"./div[./div/div[contains(@aria-label,' by ') and @role = 'article']]")
+                children_list = comment_list[1].find_elements(By.XPATH,"./div[./div/div[contains(@aria-label,' by ') and @role = 'article' and not(contains(text(),'has been deleted'))]]")
+            if len(children_list) == 0:
+                children_list = comment_list[1].find_elements(By.XPATH,"./div[./div[contains(@aria-label,' by ') and @role = 'article' and not(contains(text(),'has been deleted'))]]")
             # print(parent_comment_info['Name'])
             # print(parent_comment_info['ID'])
-            # print(children_list)
             for child in children_list:
+                # print(parent_comment_info["Name"])
+                # print('Printing child information')
+                # print(child.get_attribute('innerHTML'))
                 child_comment = self.build_comment_tree_section(driver, child, parent_comment_info['ID'])
                 if child_comment:
                     children.append(child_comment)
+        except (IndexError,CommentValueError) as e:
+            pass
+    
+        
+        try:
+            logging.info(f'Handling removed comment')
+            removed_comment = comment_list[1].find_elements(By.XPATH,"./div/div[./div/div[contains(text(),'has been deleted')]]")
+            counter = 1
+            for removed_comment_sections in removed_comment:
+                logging.info('=======================')
+                logging.info(removed_comment_sections.get_attribute('innerHTML'))
+                logging.info('______________________')
+                removed_comment_ID = parent_comment_info['ID'] + '_child_removed'
+                node_id = removed_comment_ID
+                while node_id in self._used_ids:
+                    node_id = f"{removed_comment_ID}_{counter}"
+                    counter += 1
+                self._used_ids.add(node_id)
+                children_list = removed_comment_sections.find_elements(By.XPATH,"./div[./*]")
+                # print(len(children_list))                
+
+                for child in children_list[1:]:
+                    # print(child.get_attribute('innerHTML'))
+                    # print('____________')
+                    child_comment = self.build_comment_tree_section(driver, child, node_id)
+                    if child_comment:
+                        children.append(child_comment)
+                removed_node = Comment(
+                ID = removed_comment_ID,
+                user_name = 'Removed',
+                user_group_link = 'Removed',
+                content = 'Removed',
+                media = 'Removed',
+                children = children,
+                ParentID = parent_comment_info['ParentID'],
+                )
+                self._comment_registry[parent_comment_info['ID']] = removed_node
+                # return removed_node
         except IndexError:
             pass
+        # if len(removed_comment) == 0:
         
         parent_comment_node = Comment(
             ID = parent_comment_info['ID'],
