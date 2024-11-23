@@ -68,19 +68,31 @@ logging.basicConfig(filename = 'crawl_log.log',filemode = 'w',level = logging.IN
 # with open("test_comment.pkl","wb") as f:
     # pickle.dump(full_post, f)
 
-post_2023 = []
+crawled_list = pickle.load(open("crawled_link_list.pkl", "rb"))
+post_list = pickle.load(open("all_crawled_comments.pkl", "rb"))
+
 i = 0
 for link in link_lst:
     logging.info(f'Crawling {make_ordinal(i)} post.')
     print(f'Crawling {make_ordinal(i)} post.')
+    if link in crawled_list:
+        logging.info(f'Link already crawled. \n {link}')
+        print(f'Link already crawled. \n {link}')
+    else:
+        pass
     try:
         logging.info(f'Crawling {link}')
         post = post_extrator(driver, link)
-        post_2023.append(post)
+        post_list.append(post)
+        crawled_list.append(link)
     except Exception as e:
         logging.error(e)
     i += 1
-with open("all_comment.pkl","wb") as f:
-    pickle.dump(post_2023, f)
+
+with open("crawled_link_list.pkl","wb") as f:
+    pickle.dump(crawled_list, f)
+
+with open("all_comment_timny_2024.pkl","wb") as f:
+    pickle.dump(post_list, f)
 
 

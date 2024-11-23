@@ -28,7 +28,7 @@ root_logger.addHandler(file_handler)
 my_logger.my_function()
 
 
-
+##THis funtion is used to extract reactions and creation_time from the json_script
 def find_key(data, target_key):
     if isinstance(data, dict):
         for key, value in data.items():
@@ -63,7 +63,7 @@ def find_all_key_paths(data, target_key, path=None, paths=None):
     return paths
 
 
-
+#This function is used to extract content of an individual post.
 def post_extrator(driver,link):
         '''
         Given any link and a Selenium driver, this function will export post_url, post_username, post_user_url, image of the post(if available), creation_date, post_content, reactions_count (up to the level of each individual), and all comments
