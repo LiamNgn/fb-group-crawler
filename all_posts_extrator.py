@@ -60,13 +60,13 @@ logging.basicConfig(filename = 'crawl_log.log',filemode = 'w',level = logging.IN
 # link = 'https://www.facebook.com/groups/bumblevietnam/posts/2274733519385781/?__cft__[0]=AZWdy4syLwW-i-Tm5Xu5Fjmd-PljhkFQ9PG_Aiyw9dB08PspK--dwX8PjDKIxhmN2hyfPHoMZu0gu7IT8g1rMB0adD7dp8zsuw9vaZ6QeoY6olu26DUjVJCijho6rwMpltf8AKnSNTI-y50VQPqcPsRvHFd_azjvzEdxWsCxSsBcWbijazcxMwrdNeYuJEb1iI3jc6lmC9zNtjsLHPTeKGDnEfojAgiS5SkFa1fU-DQV0w&__tn__=%2CO%2CP-R./' # This link is obscured by a link to facebook homepage, which is weird -> TODO
 # # link = "https://www.facebook.com/groups/bumblevietnam/posts/2381571642035301/"
 
-# link = 'https://www.facebook.com/groups/bumblevietnam/posts/2372080632984402/'
+# link = 'https://www.facebook.com/groups/bumblevietnam/posts/2382920688567063/'
 
 # sleep(5)
 # full_post = post_extrator(driver,link)
 
 # with open("test_comment.pkl","wb") as f:
-    # pickle.dump(full_post, f)
+#     pickle.dump(full_post, f)
 
 crawled_list = pickle.load(open("crawled_link_list.pkl", "rb"))
 post_list = pickle.load(open("all_crawled_comments.pkl", "rb"))
@@ -78,6 +78,7 @@ for link in link_lst:
     if link in crawled_list:
         logging.info(f'Link already crawled. \n {link}')
         print(f'Link already crawled. \n {link}')
+        continue
     else:
         pass
     try:
@@ -92,7 +93,7 @@ for link in link_lst:
 with open("crawled_link_list.pkl","wb") as f:
     pickle.dump(crawled_list, f)
 
-with open("all_comment_timny_2024.pkl","wb") as f:
+with open("all_crawled_comments.pkl","wb") as f:
     pickle.dump(post_list, f)
 
 

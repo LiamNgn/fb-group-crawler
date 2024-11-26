@@ -41,15 +41,21 @@ print('cookies loaded.')
 
 sleep(3)
 
-# hastag timny year 2023
+# hashtag timny year 2023
 # link = "https://www.facebook.com/groups/1615892121936594/search?q=%23timny&filters=eyJycF9jcmVhdGlvbl90aW1lOjAiOiJ7XCJuYW1lXCI6XCJjcmVhdGlvbl90aW1lXCIsXCJhcmdzXCI6XCJ7XFxcInN0YXJ0X3llYXJcXFwiOlxcXCIyMDIzXFxcIixcXFwic3RhcnRfbW9udGhcXFwiOlxcXCIyMDIzLTFcXFwiLFxcXCJlbmRfeWVhclxcXCI6XFxcIjIwMjNcXFwiLFxcXCJlbmRfbW9udGhcXFwiOlxcXCIyMDIzLTEyXFxcIixcXFwic3RhcnRfZGF5XFxcIjpcXFwiMjAyMy0xLTFcXFwiLFxcXCJlbmRfZGF5XFxcIjpcXFwiMjAyMy0xMi0zMVxcXCJ9XCJ9In0%3D"
 
-# hastag timny year 2024
-link = "https://www.facebook.com/groups/1615892121936594/search?q=%23timny&filters=eyJycF9jcmVhdGlvbl90aW1lOjAiOiJ7XCJuYW1lXCI6XCJjcmVhdGlvbl90aW1lXCIsXCJhcmdzXCI6XCJ7XFxcInN0YXJ0X3llYXJcXFwiOlxcXCIyMDI0XFxcIixcXFwic3RhcnRfbW9udGhcXFwiOlxcXCIyMDI0LTFcXFwiLFxcXCJlbmRfeWVhclxcXCI6XFxcIjIwMjRcXFwiLFxcXCJlbmRfbW9udGhcXFwiOlxcXCIyMDI0LTEyXFxcIixcXFwic3RhcnRfZGF5XFxcIjpcXFwiMjAyNC0xLTFcXFwiLFxcXCJlbmRfZGF5XFxcIjpcXFwiMjAyNC0xMi0zMVxcXCJ9XCJ9In0%3D"
+# hashtag timny year 2024
+# link = "https://www.facebook.com/groups/1615892121936594/search?q=%23timny&filters=eyJycF9jcmVhdGlvbl90aW1lOjAiOiJ7XCJuYW1lXCI6XCJjcmVhdGlvbl90aW1lXCIsXCJhcmdzXCI6XCJ7XFxcInN0YXJ0X3llYXJcXFwiOlxcXCIyMDI0XFxcIixcXFwic3RhcnRfbW9udGhcXFwiOlxcXCIyMDI0LTFcXFwiLFxcXCJlbmRfeWVhclxcXCI6XFxcIjIwMjRcXFwiLFxcXCJlbmRfbW9udGhcXFwiOlxcXCIyMDI0LTEyXFxcIixcXFwic3RhcnRfZGF5XFxcIjpcXFwiMjAyNC0xLTFcXFwiLFxcXCJlbmRfZGF5XFxcIjpcXFwiMjAyNC0xMi0zMVxcXCJ9XCJ9In0%3D"
 
+#hashtag timngiu
 
+# link = "https://www.facebook.com/groups/1615892121936594/search/?q=%23timngiu"
+# driver.get(link)
+
+#hashtag timnguoiyeu
+
+link = "https://www.facebook.com/groups/1615892121936594/search/?q=%23timnguoiyeu"
 driver.get(link)
-
 
 # sleep(10)
 # js_code = "return document.getElementsByTagName('html').innerHTML"
